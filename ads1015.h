@@ -89,22 +89,12 @@
 #define COMP_QUE_ASSERT_4 2
 #define COMP_QUE_DISABLE 3 /// default
 
-
-
-
-
-
-
-
-
-
 #define SIGN_MASK 0x8000     // bit 12 test
 #define CONTINUOUS 0x00
 #define ONE_SHOT 0x01
 
 #define MODE1           0x00
 #define MODE2           0x01
-
 
 char buf[10];
 typedef unsigned short int UINT;
@@ -126,7 +116,7 @@ typedef struct _myADS1015
 
 enum _menuitems
 {
-    Initialize=0x31,        // set up operation
+    Initialize=0x31,        // set up operation, 0x31 for ASCII
     normalMode,             // continuous single
     set_one_channel,        // one shot
     set_all_channel,        // continuous differential
@@ -139,13 +129,13 @@ enum _menuitems
 
 int postmenu();
 int config_reg_write(int);
-int conversion_reg_write(int);
-int get_data(int);
 int ADS1015_Init(const char* devname);
-int set_pointer_register(int);
 int read_register(int);
 int ADS1015_op_init(int file);
 
+//int set_pointer_register(int);
+//int conversion_reg_write(int);
+//int get_data(int);
 
 #endif //
 //==============================================

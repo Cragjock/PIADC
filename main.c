@@ -5,13 +5,9 @@ int file;
 
 int main()
 {
-
     file = ADS1015_Init(devName);   // set the device and i2C items
-
 do
 {
-    //file = ADS1015_Init(devName);   // set the device and i2C items
-
     test1 = postmenu();
 
     switch (test1)
@@ -53,7 +49,6 @@ do
         //system("clear");
 
 } while(test1 != good_bye);
-
 
     close(file);
     return 0;
