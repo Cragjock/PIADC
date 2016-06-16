@@ -105,6 +105,7 @@ char input[5];
 extern int file;
 int choice;
 
+
 typedef struct _myADS1015
 {
     int i2c_address;
@@ -134,6 +135,8 @@ int read_register(int);
 int ADS1015_op_init(int file);
 int I2C_Open(int bus, int addr);
 void I2C_Close(int filep);
+int32_t myI2C_read_swap(int file, uint8_t command);
+int myI2C_write_swap(int file, uint8_t command_reg, uint8_t data);
 
 
 //int set_pointer_register(int);

@@ -25,11 +25,16 @@ enum D_R {DR128SPS, DR250SPS, DR490SPS, DR920SPS, DR1600SPS, DR2400SPS, DR3300SP
 enum FScale {mv6144, mv4096, mv2048, mv1024, mv512, mv256};
 
 //myADS1015 ADC = {0x48, mv2048, 1, MUX4, DR250SPS};
-
 myADS1015 ADC = {0x48, mv4096, 0, MUX0, DR250SPS};
 
-//myADS1015 ADC = {0x48, mv2048, 1, MUX4, DR250SPS};
+myADS1015 arrADC[]=  {
+                    {0x48, mv4096, 0, MUX0, DR250SPS},
+                    {0x48, mv2048, 1, MUX1, DR250SPS},
+                    {0x48, mv1024, 1, MUX4, DR1600SPS},
+                };
 
+
+//myADS1015 ADC = {0x48, mv2048, 1, MUX4, DR250SPS};
 
 const char * i2cdev[2] = {"/dev/ic2-0","/dev/i2c-1"};
 static int slave_address = 0x48;
@@ -65,8 +70,6 @@ int postmenu()
     return choice;
 }
 
-
-
 int config_reg_write(int file)  // read it only now
 {
     UINT result = 67;   //BS number to start
@@ -79,8 +82,6 @@ int config_reg_write(int file)  // read it only now
     return 0;
 }
 
-
-
 /**************************************
     Initialize bus and ADC
 **************************************/
@@ -88,32 +89,6 @@ int ADS1015_Init(const char* devname)
 {
     file= I2C_Open(1, slave_address);
     //file = open(devname, O_RDWR);
-
-    int file1=open(devname, O_RDWR);
-    ///if (file == -1)
-    ///    {
-    ///        perror(devname);
-    ///        exit(1);
-    ///    }
-
-    //int addr = 0x65;
-    //int isgood = ioctl(file, I2C_SLAVE, addr);
-    ///if (ioctl(file, I2C_SLAVE,I2C_SLAVE_ADDRESS) < 0)
-    ///{
-    ///    perror("Failed to acquire bus access and/or talk to slave");
-    ///    exit(1);
-    ///}
-
-    if (ioctl(file1, I2C_SLAVE,0x40) < 0)
-    {
-        perror("Failed to acquire bus access and/or talk to slave");
-        exit(1);
-    }
-
-    BYTE MyMode1=i2c_smbus_read_byte_data(file1, MODE1);    // result in MyMode1
-    printf("MODE 1: 0x%02X\n", MyMode1);
-    BYTE MyMode2=i2c_smbus_read_byte_data(file1, MODE2);    // result in MyMode2
-    printf("MODE 2: 0x%02X\n", MyMode2);
 
     return file;
 }
@@ -124,18 +99,19 @@ int ADS1015_Init(const char* devname)
 ****************************/
 int ADS1015_op_init(int file)
 {
-
-    unsigned int i = 1;
-    char *c = (char*)&i;
-    if (*c)
-       printf("Little endian\n");
-    else
-       printf("Big endian\n");;
+    //unsigned int i = 1;
+    //char *c = (char*)&i;
+    //if (*c)
+    //   printf("Little endian\n");
+    //else
+    //   printf("Big endian\n");;
 
     UINT result = 16; // BS number
     UINT res = 0x4823;
     UINT result1 = 32;
+
     result=i2c_smbus_read_word_data(file, Config_Reg);
+    //result = myI2C_read_swap(file, Config_Reg);
     printf("the op intit config register is x%x: \n", result);
 
     result1 = (result & 0x1000); // check if still converting or not
@@ -178,16 +154,20 @@ int ADS1015_op_init(int file)
     printf("byte order correct config reg: 0x%x\n", result);
 
     result=i2c_smbus_write_word_data(file, Config_Reg, result);
+    //result=myI2C_write_swap(file, Config_Reg, result);
+
     //result=i2c_smbus_write_word_data(file, Config_Reg,0x4302);
     //result=i2c_smbus_write_word_data(file, Config_Reg,config);
 
     result=i2c_smbus_read_word_data(file, Config_Reg);
+    //result = myI2C_read_swap(file, Config_Reg);
 
     uint16_t sdc = bswap_16(result); // grt the right order to display
     printf("the op intit config register is x%x: \n", sdc);
 
     return 0;
 }
+
 
 /**< KEEP THIS ************** */
 int read_register(int file)
@@ -196,8 +176,8 @@ int read_register(int file)
     int16_t result = 23; // due to __s32 i2c_smbus_read_word_data(int file, __u8 command)
     uint16_t result1= 0x8312; // BS data
 
-    //result = i2c_smbus_write_byte(file, Convert_Reg);           // set point reg to convert reg
-    result = i2c_smbus_read_word_data(file, Convert_Reg);       // read the data
+    //result = i2c_smbus_read_word_data(file, Convert_Reg);       // read the data
+    result = myI2C_read_swap(file, Convert_Reg);                // read the data
     printf("raw convert register count is: 0x%x\n", result);
 
     /************************************
@@ -206,6 +186,9 @@ int read_register(int file)
         then times the gain, this gives volt count times 1000
         then divide 1000 to set decimal place correctly
     ************************************/
+
+
+ /*****  swap is done in the i2c read
     // use the byte swap header
     uint16_t sdc = bswap_16(result1); // does it swap ?
     printf("test byte swap test in: %x, out: %x \n", result1, sdc);
@@ -217,6 +200,7 @@ int read_register(int file)
     buf[3]=LBYTE(result);
     result=(buf[3]<<8) | buf[2];    //x = lobyte << 8 | hibyte;
     printf("byte order correct convert reg count: 0x%x\n", result);
+*****/
 
     // check if negative
     if((result & SIGN_MASK) == SIGN_MASK)
@@ -229,7 +213,9 @@ int read_register(int file)
     printf("Test equation for servo count: %2.3i\n", (int)PCAcount);
 
     //result=i2c_smbus_write_byte(file, Config_Reg);  // is this needed ??????
+
     result=i2c_smbus_read_word_data(file, Config_Reg);
+    //result = myI2C_read_swap(file, Config_Reg);
     printf("the config register is: x%x\n", result);
 
     return 0;
@@ -263,4 +249,57 @@ void I2C_Close(int filep)
 {
     close(filep);
 }
+/*********************************************************/
+int myI2C_write_data(int file, uint8_t command_reg, uint8_t data)
+{
+    int res = i2c_smbus_write_byte_data(file, command_reg, data);
+    /** S Addr Wr [A] Comm [A] Data [A] P **/
+    if (res<0)
+    {
+        printf("result i2c write error");
+        return -1;
+    }
+    return 0;
+}
+/***********************************************************/
+int32_t myI2C_read_data(int file, uint8_t command)
+{
+        int32_t res = i2c_smbus_read_byte_data(file, command);
+        if (res < 0)
+        {
+            printf("Read error");
+            return -1;
+        }
+        return res;      // return the read data
+}
 
+int myI2C_write_swap(int file, uint8_t command_reg, uint8_t data)
+{
+    /** use the byte swap header **/
+    uint16_t data_swap = bswap_16(data);
+
+    int res = i2c_smbus_write_word_data(file, command_reg, data_swap);
+    /** S Addr Wr [A] Comm [A] DataLow [A] DataHigh [A] P **/
+    if (res<0)
+    {
+        printf("result i2c write error");
+        return -1;
+    }
+    return 0;
+}
+/***********************************************************/
+int32_t myI2C_read_swap(int file, uint8_t command)
+{
+        int32_t res = i2c_smbus_read_word_data(file, command);
+        /** S Addr Wr [A] Comm [A] S Addr Rd [A] [DataLow] A [DataHigh] NA P **/
+        if (res < 0)
+        {
+            printf("Read error");
+            return -1;
+        }
+
+        /** use the byte swap header **/
+        uint16_t res_swap = bswap_16(res); // does it swap ?
+
+        return res_swap;      // return the read data
+}
