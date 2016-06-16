@@ -30,6 +30,10 @@ myADS1015 ADC = {0x48, mv4096, 0, MUX0, DR250SPS};
 
 //myADS1015 ADC = {0x48, mv2048, 1, MUX4, DR250SPS};
 
+
+const char * i2cdev[2] = {"/dev/ic2-0","/dev/i2c-1"};
+static int slave_address = 0x48;
+
 /************************
     POST MENU
 *************************/
@@ -82,21 +86,23 @@ int config_reg_write(int file)  // read it only now
 **************************************/
 int ADS1015_Init(const char* devname)
 {
-    file = open(devname, O_RDWR);
+    file= I2C_Open(1, slave_address);
+    //file = open(devname, O_RDWR);
+
     int file1=open(devname, O_RDWR);
-    if (file == -1)
-        {
-            perror(devname);
-            exit(1);
-        }
+    ///if (file == -1)
+    ///    {
+    ///        perror(devname);
+    ///        exit(1);
+    ///    }
 
     //int addr = 0x65;
     //int isgood = ioctl(file, I2C_SLAVE, addr);
-    if (ioctl(file, I2C_SLAVE,I2C_SLAVE_ADDRESS) < 0)
-    {
-        perror("Failed to acquire bus access and/or talk to slave");
-        exit(1);
-    }
+    ///if (ioctl(file, I2C_SLAVE,I2C_SLAVE_ADDRESS) < 0)
+    ///{
+    ///    perror("Failed to acquire bus access and/or talk to slave");
+    ///    exit(1);
+    ///}
 
     if (ioctl(file1, I2C_SLAVE,0x40) < 0)
     {
@@ -176,14 +182,9 @@ int ADS1015_op_init(int file)
     //result=i2c_smbus_write_word_data(file, Config_Reg,config);
 
     result=i2c_smbus_read_word_data(file, Config_Reg);
-    printf("the op intit config register is x%x: \n", result);
 
-    //buf[1]=0b 0 100 010 0 000 0 0 0 11
-    //buf[1]=0b 0100 0100 1000 0011
-    //buf[1]=0x4483;
-    //result=i2c_smbus_write_byte(file, Config_Reg);
-    //result=i2c_smbus_write_word_data(file, Config_Reg, 0x4483);
-    //result=i2c_smbus_read_word_data(file, Config_Reg);
+    uint16_t sdc = bswap_16(result); // grt the right order to display
+    printf("the op intit config register is x%x: \n", sdc);
 
     return 0;
 }
@@ -192,7 +193,7 @@ int ADS1015_op_init(int file)
 int read_register(int file)
 {
     //SINT result = 23; // BS number
-    int32_t result = 23; // due to __s32 i2c_smbus_read_word_data(int file, __u8 command)
+    int16_t result = 23; // due to __s32 i2c_smbus_read_word_data(int file, __u8 command)
     uint16_t result1= 0x8312; // BS data
 
     //result = i2c_smbus_write_byte(file, Convert_Reg);           // set point reg to convert reg
@@ -207,9 +208,9 @@ int read_register(int file)
     ************************************/
     // use the byte swap header
     uint16_t sdc = bswap_16(result1); // does it swap ?
-    printf("test byte swap test in: %i, out: %i \n", result1, sdc);
+    printf("test byte swap test in: %x, out: %x \n", result1, sdc);
     sdc = bswap_16(result);
-    printf("from device byte swap test in: %i, out: %i \n", result, sdc);
+    printf("from device byte swap test in: %x, out: %x \n", result, sdc);
 
     // get the byte order correct using my macros ====
     buf[2]=HBYTE(result);
@@ -227,65 +228,39 @@ int read_register(int file)
     float PCAcount = ((float)result/1000*80)+320;
     printf("Test equation for servo count: %2.3i\n", (int)PCAcount);
 
-    result=i2c_smbus_write_byte(file, Config_Reg);  // is this needed ??????
+    //result=i2c_smbus_write_byte(file, Config_Reg);  // is this needed ??????
     result=i2c_smbus_read_word_data(file, Config_Reg);
     printf("the config register is: x%x\n", result);
 
     return 0;
 }
-/*************************
-int set_pointer_register(int file)
+
+/*******************************************************************/
+int I2C_Open(int bus, int addr)
 {
-    int result = 16; // BS number
+    int file;
+    //char* mine = "/dev/i2c-1";
+    //file = open(mine, O_RDWR);
 
-    buf[0]=Convert_Reg;
-    buf[1]=0;
-    result=i2c_smbus_write_byte_data(file, Convert_Reg, buf);
-
-    buf[0]=Config_Reg;
-    buf[1]=0;
-    result=i2c_smbus_write_byte_data(file, Config_Reg, buf);
-
-    buf[0]=LO_Thresh_Reg;
-    buf[1]=0;
-    result=i2c_smbus_write_byte_data(file, LO_Thresh_Reg, buf);
-
-    buf[0]=LO_Thresh_Reg;
-    buf[1]=0;
-    result=i2c_smbus_write_byte_data(file, LO_Thresh_Reg, buf);
-
-    return 0;
-}
-*********************/
-/********************
-int get_data(int file)
-{
-        int data=0;
-        int data1=0;
-        int data2=0;
-
-        data=i2c_smbus_write_byte_data(file, Convert_Reg, buf);
-        data1 = data >> 4;
-        if((data1 & SIGN_MASK) == SIGN_MASK) // now, is bit 12 (D11) set? then negative number
+    file = open(i2cdev[bus], O_RDWR);
+    if (file == -1)
         {
-            data2 = ~(data1);
-            data2+=1;               // invert and add 1
+            perror(i2cdev[bus]);
+            int errsv = errno;
+            return -1;
         }
-        else data2=data1;
 
-    return data2;
+    if (ioctl(file, I2C_SLAVE, addr) < 0)
+    {
+        perror("Failed to acquire bus access and/or talk to slave");
+        //exit(1);
+        return -1;
+    }
+    return file;
 }
-*****************/
-/**************************
-int conversion_reg_write(int file)
+
+void I2C_Close(int filep)
 {
-    UINT result = 23; // BS number to start
-
-    result = i2c_smbus_read_word_data(file, Convert_Reg);  //write to pointer register and set convert reg
-    printf("read conversion register: 0x%x \n", result);
-
-
-    return 0;
+    close(filep);
 }
-********************/
 

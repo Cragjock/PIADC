@@ -132,6 +132,9 @@ int config_reg_write(int);
 int ADS1015_Init(const char* devname);
 int read_register(int);
 int ADS1015_op_init(int file);
+int I2C_Open(int bus, int addr);
+void I2C_Close(int filep);
+
 
 //int set_pointer_register(int);
 //int conversion_reg_write(int);
