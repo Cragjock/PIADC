@@ -45,6 +45,8 @@
 #define CR_COMP_Q1 1
 #define CR_COMP_Q2 0
 
+
+/***
 /// input MUX: differential
 #define mux_diff_1 0x0 /// Ain_p=Ain0 & Ain_n=Ain1 default
 #define mux_diff_2 0x1 /// Ain_p=Ain0 & Ain_n=Ain3
@@ -76,6 +78,39 @@
 #define DR_2400sps 0x5
 #define DR_3300sps 0x6
 #define DR_3300sps 0x7
+
+**/
+
+///or do this?
+/// input MUX: differential
+#define mux_diff_1 0x0000      /// Ain_p=Ain0 & Ain_n=Ain1 default
+#define mux_diff_2 0x1000      /// Ain_p=Ain0 & Ain_n=Ain3
+#define mux_diff_3 0x2000      /// Ain_p=Ain1 & Ain_n=Ain3
+#define mux_diff_4 0x3000      /// Ain_p=Ain2 & Ain_n=Ain3
+/// input MUX: single ended
+#define mux_single_1 0x4000    /// Ain_p=Ain0 & Ain_n=gnd
+#define mux_single_2 0x5000    /// Ain_p=Ain1 & Ain_n=gnd
+#define mux_single_3 0x6000    /// Ain_p=Ain2 & Ain_n=gnd
+#define mux_single_4 0x7000    /// Ain_p=Ain3 & Ain_n=gnd
+/// Programmable gain amplifier
+#define PGA_6144 0x0000
+#define PGA_4096 0x0200
+#define PGA_2048 0x0400 /// default
+#define PGA_1024 0x0600
+#define PGA_0512 0x0800
+#define PGA_0256 0x0A00
+#define PGA_0256 0x0C00
+#define PGA_0256 0x0E00
+/// Sampling data rates
+#define DR_128sps 0x0000
+#define DR_250sps 0x0020
+#define DR_490sps 0x0040
+#define DR_920sps 0x0060
+#define DR_1600sps 0x0080  /// default
+#define DR_2400sps 0x00A0
+#define DR_3300sps 0x00C0
+#define DR_3300sps 0x00E0
+/****/
 
 #define MODE_CONTINUOUS 0x00
 #define MODE_SINGLE_SHOT 0x01

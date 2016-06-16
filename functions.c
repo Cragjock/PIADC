@@ -12,6 +12,7 @@ char* mux_type[]=
     "Ain_p=Ain3 & Ain_n=gnd"
 };
 
+
 /*** Samples per second ***/
 unsigned int data_rates[8] = {128, 250, 490, 920, 1600, 2400, 3300, 3300};
 
@@ -38,6 +39,8 @@ myADS1015 arrADC[]=  {
 
 const char * i2cdev[2] = {"/dev/ic2-0","/dev/i2c-1"};
 static int slave_address = 0x48;
+uint16_t init_config_reg = 0;
+
 
 /************************
     POST MENU
@@ -89,6 +92,9 @@ int ADS1015_Init(const char* devname)
 {
     file= I2C_Open(1, slave_address);
     //file = open(devname, O_RDWR);
+
+    init_config_reg = mux_diff_1 | PGA_4096 | DR_250sps | MODE_CONTINUOUS;
+    myI2C_write_swap(int file, Config_Reg, init_config_reg);
 
     return file;
 }

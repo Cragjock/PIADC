@@ -3,7 +3,6 @@
 const char * devName = "/dev/i2c-1";
 int file;
 
-
 int main()
 {
     file = ADS1015_Init(devName);   // set the device and i2C items
