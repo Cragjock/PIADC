@@ -3,6 +3,7 @@
 const char * devName = "/dev/i2c-1";
 int file;
 
+
 int main()
 {
     file = ADS1015_Init(devName);   // set the device and i2C items
@@ -20,11 +21,11 @@ do
                 break;
             case set_one_channel:
                 printf("\nyou selected: read conversion\n");
-                read_register(file);
+                read_config_reg(file);
                 break;
             case set_all_channel:
                 printf("\nyou selected: read config register\n");
-                config_reg_write(file);
+                read_convert_register(file);
                 break;
             case allLED_off:
                 printf("\nyou selected: allLED_off\n");
@@ -45,7 +46,6 @@ do
                 printf("\nyou selected: default\n");
                 break;
         }
-
 }
     while(test1 != good_bye);
 
