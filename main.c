@@ -5,15 +5,10 @@ int file;
 
 int main()
 {
-
     file = ADS1015_Init(devName);   // set the device and i2C items
-
 do
 {
-    //file = ADS1015_Init(devName);   // set the device and i2C items
-
     test1 = postmenu();
-
     switch (test1)
         {
             case Initialize:
@@ -50,10 +45,9 @@ do
                 printf("\nyou selected: default\n");
                 break;
         }
-        //system("clear");
 
-} while(test1 != good_bye);
-
+}
+    while(test1 != good_bye);
 
     close(file);
     return 0;
