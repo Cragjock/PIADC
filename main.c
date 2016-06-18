@@ -19,12 +19,12 @@ do
                 printf("\nyou selected: normalMode\n");
                 break;
             case set_one_channel:
-                printf("\nyou selected: read conversion\n");
-                read_register(file);
+                printf("\nyou selected: read config reg\n");
+                read_config_reg(file);
                 break;
             case set_all_channel:
-                printf("\nyou selected: read config register\n");
-                config_reg_write(file);
+                printf("\nyou selected: read convert register\n");
+                read_convert_register(file);
                 break;
             case allLED_off:
                 printf("\nyou selected: allLED_off\n");
@@ -45,7 +45,6 @@ do
                 printf("\nyou selected: default\n");
                 break;
         }
-
 }
     while(test1 != good_bye);
 
