@@ -12,7 +12,6 @@ char* mux_type[]=
     "Ain_p=Ain3 & Ain_n=gnd"
 };
 
-
 /*** Samples per second ***/
 unsigned int data_rates[8] = {128, 250, 490, 920, 1600, 2400, 3300, 3300};
 
@@ -51,8 +50,8 @@ int postmenu()
         printf("Select a menu item:\n\
             1: ADS1015_op_init\n\
             2: Normal mode\n\
-            3: read_register\n\
-            4: read config reg\n\
+            3: read_config\n\
+            4: read conversion reg\n\
             5: All LED off\n\
             6: All LED on\n\
             7: rate up/down\n\
@@ -74,36 +73,36 @@ int postmenu()
     return choice;
 }
 
-int read_config_reg(int file)
+UINT read_config_reg(int file)
 {
     UINT result = 67;   //BS number to start
     UINT resultswap = 17;
 
     result=i2c_smbus_read_word_data(file, Config_Reg);
-    printf("read config register: 0x%x \n", result);
+    printf("read config register: %x \n", result);
 
-    resultswap=i2c_smbus_read_word_data_swapped(file, Config_Reg);
-    printf("read swapped config register: 0x%x \n", resultswap);
+    resultswap=myI2C_read_swap(file, Config_Reg);
+    printf("read swapped config register: %x \n", resultswap);
 
     myADS1015 current_CR;
     current_CR.data_rate = (result & 0x0e0) >> CR_DR0;
     current_CR.Mux = (result & 0x7000) >> CR_MUX0;    current_CR.PGA = (result &0x0E00 ) >> CR_PGA0;
 
-    arrADC[3].data_rate = (result & 0x0e0) >> CR_DR0;
-    arrADC[3].Mux = (result & 0x7000) >> CR_MUX0;
-    arrADC[3].PGA = (result &0x0E00 ) >> CR_PGA0;
+    arrADC[3].data_rate = (resultswap & 0x0e0) >> CR_DR0;
+    arrADC[3].Mux = (resultswap & 0x7000) >> CR_MUX0;
+    arrADC[3].PGA = (resultswap &0x0E00 ) >> CR_PGA0;
 
-    printf("current config reg is %x\ndata rate is%x\nmux is%x\nPGA is %x\n",
-                    result,
-                    current_CR.data_rate,
-                    current_CR.Mux,
-                    current_CR.PGA);
+    printf("current config reg is: %x\ndata rate is: %x\nmux is: %x\nPGA is: %x\n",
+                    resultswap,
+                    arrADC[3].data_rate,
+                    arrADC[3].Mux,
+                    arrADC[3].PGA);
 
-    printf("Mux number is :%s \n", mux_type[current_CR.Mux]);
-    printf("PGA setting is :%d \n", fullscale[current_CR.PGA]);
-    printf("Data rate is :%d \n", data_rates[current_CR.data_rate]);
+    printf("Mux number is: %s \n", mux_type[arrADC[3].Mux]);
+    printf("PGA setting is: %d \n", fullscale[arrADC[3].PGA]);
+    printf("Data rate is: %d \n", data_rates[arrADC[3].data_rate]);
 
-    return 0;
+    return resultswap;
 }
 
 /**************************************
@@ -122,7 +121,7 @@ int ADS1015_Init(const char* devname)
 }
 
 /*************/
-int ADS1015_op_init(int file)
+int ADS1015_op_init(int file)   // maybe not needed
 {
     //unsigned int i = 1;
     //char *c = (char*)&i;
@@ -184,11 +183,12 @@ int ADS1015_op_init(int file)
     //result=i2c_smbus_write_word_data(file, Config_Reg,0x4302);
     //result=i2c_smbus_write_word_data(file, Config_Reg,config);
 
-    result=i2c_smbus_read_word_data(file, Config_Reg);
+    //result=i2c_smbus_read_word_data(file, Config_Reg);
+    result=read_config_reg(file);
     //result = myI2C_read_swap(file, Config_Reg);
 
-    uint16_t sdc = bswap_16(result); // grt the right order to display
-    printf("the op intit config register is x%x: \n", sdc);
+    //uint16_t sdc = bswap_16(result); // grt the right order to display
+    printf("the op intit config register is x%x: \n", result);
 
     return 0;
 }
@@ -202,10 +202,11 @@ do
 {
     //SINT result = 23; // BS number
     int16_t result = 0x1234; // due to __s32 i2c_smbus_read_word_data(int file, __u8 command)
+    int16_t result_sw = 0x7893;
     uint16_t result1= 0x8312; // BS data
 
-    result = i2c_smbus_read_word_data(file, Convert_Reg);       // read the data
-    //result = myI2C_read_swap(file, Convert_Reg);                // read the data
+    //result = i2c_smbus_read_word_data(file, Convert_Reg);       // read the data
+    result = myI2C_read_swap(file, Convert_Reg);                // read the data
     printf("raw convert register count is: 0x%x\n", result);
 
     /************************************
@@ -216,37 +217,24 @@ do
     ************************************/
 
 
- /*****  swap is done in the i2c read  */
-    // use the byte swap header
-    uint16_t sdc = bswap_16(result1); // does it swap ?
-    printf("test byte swap test in: %x, out: %x \n", result1, sdc);
-    sdc = bswap_16(result);
-    printf("from device byte swap test in: %x, out: %x \n", result, sdc);
 
-    // get the byte order correct using my macros ====
-///#define LBYTE(LB) (LB & 0x0FF)
-///#define HBYTE(HB) ((HB & 0xFF00)>>8)
-    buf[2]=HBYTE(result);
-    buf[3]=LBYTE(result);
-    result=(buf[3]<<8) | buf[2];    //x = lobyte << 8 | hibyte;
-    printf("byte order correct convert reg count: 0x%x\n", result);
-/*****/
 
     // check if negative
     if((result & SIGN_MASK) == SIGN_MASK)
         result = -(~(result)+1);
 
     result = (result>>4)*2;         // assumes gain is 2
+    printf("===================");
     printf("the voltage (x1) is: %2.3f\n", (float)result/1000);
 
     float PCAcount = ((float)result/1000*80)+320;
     printf("Test equation for servo count: %2.3i\n", (int)PCAcount);
 
-    result=i2c_smbus_read_word_data(file, Config_Reg);
-    //result = myI2C_read_swap(file, Config_Reg);
+    //result=i2c_smbus_read_word_data(file, Config_Reg);
+    result = myI2C_read_swap(file, Config_Reg);
     printf("the config register is: x%x\n", result);
 
-    sleep(3);
+    sleep(2);
 
 }
 while(1);
@@ -324,7 +312,7 @@ int16_t myI2C_read_swap(int file, uint8_t command)
 {
         int16_t res = i2c_smbus_read_word_data(file, command);
         /** S Addr Wr [A] Comm [A] S Addr Rd [A] [DataLow] A [DataHigh] NA P **/
-        if (res < 0)
+        if (res == -1)
         {
             printf("Read error");
             return -1;

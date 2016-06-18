@@ -45,40 +45,6 @@
 #define CR_COMP_Q1 1
 #define CR_COMP_Q2 0
 
-/***
-/// input MUX: differential
-#define mux_diff_1 0x0 /// Ain_p=Ain0 & Ain_n=Ain1 default
-#define mux_diff_2 0x1 /// Ain_p=Ain0 & Ain_n=Ain3
-#define mux_diff_3 0x2 /// Ain_p=Ain1 & Ain_n=Ain3
-#define mux_diff_4 0x3 /// Ain_p=Ain2 & Ain_n=Ain3
-
-/// input MUX: single ended
-#define mux_single_1 0x4 /// Ain_p=Ain0 & Ain_n=gnd
-#define mux_single_2 0x5 /// Ain_p=Ain1 & Ain_n=gnd
-#define mux_single_3 0x6 /// Ain_p=Ain2 & Ain_n=gnd
-#define mux_single_4 0x7 /// Ain_p=Ain3 & Ain_n=gnd
-
-/// Programmable gain amplifier
-#define PGA_6144 0x0
-#define PGA_4096 0x1
-#define PGA_2048 0x2 /// default
-#define PGA_1024 0x3
-#define PGA_0512 0x4
-#define PGA_0256 0x5
-#define PGA_0256 0x6
-#define PGA_0256 0x7
-
-/// Sampling data rates
-#define DR_128sps 0x0
-#define DR_250sps 0x1
-#define DR_490sps 0x2
-#define DR_920sps 0x3
-#define DR_1600sps 0x4  /// default
-#define DR_2400sps 0x5
-#define DR_3300sps 0x6
-#define DR_3300sps 0x7
-**/
-
 /// input MUX: differential
 #define mux_diff_1 0x0000      /// Ain_p=Ain0 & Ain_n=Ain1 default
 #define mux_diff_2 0x1000      /// Ain_p=Ain0 & Ain_n=Ain3
@@ -158,7 +124,7 @@ enum _menuitems
 } menuitems, test1;
 
 int postmenu();
-int read_config_reg(int);
+UINT read_config_reg(int);
 int ADS1015_Init(const char* devname);
 int read_convert_register(int);
 int ADS1015_op_init(int file);
@@ -171,21 +137,7 @@ int myI2C_write_swap(int file, uint8_t command_reg, uint16_t data);
 //==============================================
 // =============================================
 
-/**************
-static inline s32
-i2c_smbus_read_word_swapped(const struct i2c_client *client, u8 command)
-{
-	s32 value = i2c_smbus_read_word_data(client, command);
-	return (value < 0) ? value : swab16(value);
-}
-static inline s32
-i2c_smbus_write_word_swapped(const struct i2c_client *client, u8 command, u16 value)
-{
-	return i2c_smbus_write_word_data(client, command, swab16(value));
-}
-from byteswap.h
-#define bswap_16(x) (((x) << 8) & 0xff00) | (((x) >> 8 ) & 0xff)
-**********/
+
 
 
 
